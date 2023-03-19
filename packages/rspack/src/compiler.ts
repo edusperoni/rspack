@@ -18,7 +18,7 @@ import * as binding from "@rspack/binding";
 import { Logger } from "./logging/Logger";
 import { RspackOptionsNormalized } from "./config";
 import { Stats } from "./stats";
-import { Compilation } from "./compilation";
+import { Compilation, CompilationParams } from "./compilation";
 import ResolverFactory from "./ResolverFactory";
 import { WatchFileSystem } from "./util/fs";
 import ConcurrentCompilationError from "./error/ConcurrentCompilationError";
@@ -27,6 +27,7 @@ import {
 	createThreadsafeNodeFSFromRaw,
 	ThreadsafeWritableNodeFS
 } from "./fileSystem";
+import { NormalModuleFactory } from "./normalModuleFactory";
 
 class EntryPlugin {
 	apply() {}
@@ -64,7 +65,7 @@ class Compiler {
 		// TODO: CompilationParams
 		compilation: tapable.SyncHook<Compilation>;
 		// TODO: CompilationParams
-		thisCompilation: tapable.SyncHook<[Compilation]>;
+		thisCompilation: tapable.SyncHook<[Compilation, CompilationParams]>;
 		invalid: tapable.SyncHook<[string | null, number]>;
 		compile: tapable.SyncHook<[any]>;
 		initialize: tapable.SyncHook<[]>;
@@ -117,14 +118,9 @@ class Compiler {
 			run: new tapable.AsyncSeriesHook(["compiler"]),
 			emit: new tapable.AsyncSeriesHook(["compilation"]),
 			afterEmit: new tapable.AsyncSeriesHook(["compilation"]),
-			thisCompilation: new tapable.SyncHook<
-				[
-					Compilation
-					// CompilationParams
-				]
-			>([
-				"compilation"
-				// "params"
+			thisCompilation: new tapable.SyncHook<[Compilation, CompilationParams]>([
+				"compilation",
+				"params"
 			]),
 			compilation: new tapable.SyncHook<Compilation>(["compilation"]),
 			invalid: new SyncHook(["filename", "changeTime"]),
@@ -312,6 +308,7 @@ class Compiler {
 				),
 			compilation: this.hooks.compilation,
 			optimizeChunkModules: this.compilation.hooks.optimizeChunkModules
+			// normalModuleFactoryResolveForScheme: this.
 		};
 		for (const [name, hook] of Object.entries(hookMap)) {
 			if (hook.taps.length === 0) {
@@ -331,6 +328,13 @@ class Compiler {
 			.__internal_getProcessAssetsHookByStage(stage)
 			.promise(this.compilation.assets);
 		this.#updateDisabledHooks();
+	}
+
+	async #normalModuleFactoryResolveForScheme() {
+		// await this.compilation
+		// 	.__internal_getProcessAssetsHookByStage(stage)
+		// 	.promise(this.compilation.assets);
+		// this.#updateDisabledHooks();
 	}
 
 	async #optimize_chunk_modules() {
@@ -365,7 +369,9 @@ class Compiler {
 		const compilation = new Compilation(this, native);
 		compilation.name = this.name;
 		this.compilation = compilation;
-		this.hooks.thisCompilation.call(this.compilation);
+		this.hooks.thisCompilation.call(this.compilation, {
+			normalModuleFactory: new NormalModuleFactory()
+		});
 		this.#updateDisabledHooks();
 	}
 
