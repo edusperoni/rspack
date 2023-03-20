@@ -40,6 +40,7 @@ import * as ErrorHelpers from "./ErrorHelpers";
 import { concatErrorMsgAndStack } from "./util";
 import { normalizeStatsPreset, Stats } from "./stats";
 import { createHash } from "crypto";
+import { NormalModuleFactory } from "./normalModuleFactory";
 
 const hashDigestLength = 8;
 const EMPTY_ASSET_INFO = {};
@@ -51,6 +52,10 @@ export interface LogEntry {
 	args: any[];
 	time: number;
 	trace?: string[];
+}
+
+export interface CompilationParams {
+	normalModuleFactory: NormalModuleFactory;
 }
 
 export interface KnownCreateStatsOptionsContext {
@@ -80,6 +85,7 @@ export class Compilation {
 	logging: Map<string, LogEntry[]>;
 	name?: string;
 	childrenCounters: Record<string, number> = {};
+	normalModuleFactory?: NormalModuleFactory;
 
 	constructor(compiler: Compiler, inner: JsCompilation) {
 		this.name = undefined;

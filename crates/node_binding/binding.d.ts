@@ -428,11 +428,26 @@ export interface JsHooks {
   optimizeChunkModule: (...args: any[]) => any
   beforeCompile: (...args: any[]) => any
   finishModules: (...args: any[]) => any
+  normalModuleFactoryResolveForScheme: (...args: any[]) => any
 }
 export interface JsModule {
   originalSource?: JsCompatSource
   resource: string
   moduleIdentifier: string
+}
+export interface SchemeAndJsResourceData {
+  resourceData: JsResourceData
+  scheme: string
+}
+export interface JsResourceData {
+  /** Resource with absolute path, query and fragment */
+  resource: string
+  /** Absolute resource path only */
+  path: string
+  /** Resource query with `?` prefix */
+  query?: string
+  /** Resource fragment with `#` prefix */
+  fragment?: string
 }
 export interface JsCompatSource {
   /** Whether the underlying data structure is a `RawSource` */
